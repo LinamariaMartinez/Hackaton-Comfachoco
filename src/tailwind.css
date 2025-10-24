@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  /* Comfachocó Brand Colors */
+  --color-primary-green: #04B45F;
+  --color-primary-dark: #026636;
+  --color-turquoise: #1ABC9C;
+  --color-blue-light: #62BFE6;
+  --color-background-light: #F9F9FC;
+  --color-gray-dark: #303030;
+  --color-gray-medium: #8A8A8A;
+  --color-yellow-alert: #FFF500;
+
+  /* Font Families */
+  --font-family-raleway: 'Raleway', ui-sans-serif, system-ui, sans-serif;
+  --font-family-roboto: 'Roboto', ui-sans-serif, system-ui, sans-serif;
+}
