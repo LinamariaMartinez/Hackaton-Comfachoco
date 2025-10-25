@@ -9,7 +9,6 @@
   <br/>
 
   <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/License-Comfachocó-blue?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Hackathon-Talento_Tech_2025-orange?style=for-the-badge" alt="Hackathon">
 </div>
 
