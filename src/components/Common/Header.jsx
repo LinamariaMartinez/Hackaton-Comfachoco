@@ -29,7 +29,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-[#2E7D5F] shadow-md sticky top-0 z-50">
+    <header className="bg-[#2E7D5F] shadow-md sticky top-0 z-50" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo - Izquierda */}
@@ -50,16 +50,17 @@ const Header = () => {
           </div>
 
           {/* Nav - Centro */}
-          <nav className="hidden md:flex">
+          <nav className="hidden md:flex" role="navigation" aria-label="Navegación principal">
             <button
               onClick={handleHome}
+              aria-label="Ir a inicio"
               className="
                 flex items-center gap-2 px-4 py-2 rounded-lg
                 text-white hover:bg-white hover:bg-opacity-10
                 transition-all duration-200
               "
             >
-              <Home size={18} />
+              <Home size={18} aria-hidden="true" />
               <span className="font-raleway font-medium">Inicio</span>
             </button>
           </nav>
@@ -68,26 +69,26 @@ const Header = () => {
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Notificaciones */}
             <button
+              aria-label="Notificaciones"
               className="
                 relative p-2 rounded-lg text-white
                 hover:bg-white hover:bg-opacity-10
                 transition-all duration-200
               "
-              title="Notificaciones"
             >
-              <Bell size={20} />
+              <Bell size={20} aria-hidden="true" />
               {/* Badge de notificaciones */}
-              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-alert rounded-full" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-alert rounded-full" aria-label="Tiene notificaciones nuevas" />
             </button>
 
             {/* Usuario */}
             <button
+              aria-label={`Perfil de ${user?.name || 'Usuario'}`}
               className="
                 flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 rounded-lg
                 text-white hover:bg-white hover:bg-opacity-10
                 transition-all duration-200
               "
-              title="Perfil"
             >
               <div className="hidden sm:block text-right">
                 <p className="font-raleway font-semibold text-sm leading-tight">
@@ -105,42 +106,43 @@ const Header = () => {
               </div>
 
               <div className="w-9 h-9 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <User size={18} className="text-white" />
+                <User size={18} className="text-white" aria-hidden="true" />
               </div>
             </button>
 
             {/* Logout */}
             <button
               onClick={handleLogout}
+              aria-label="Cerrar sesión"
               className="
                 p-2 rounded-lg text-white
                 hover:bg-red-600 hover:bg-opacity-20
                 transition-all duration-200
               "
-              title="Cerrar sesión"
             >
-              <LogOut size={20} />
+              <LogOut size={20} aria-hidden="true" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Nav móvil - debajo del header */}
-      <div className="md:hidden bg-[#26674F] border-t border-white border-opacity-10">
+      <nav className="md:hidden bg-[#26674F] border-t border-white border-opacity-10" role="navigation" aria-label="Navegación móvil">
         <div className="max-w-7xl mx-auto px-4">
           <button
             onClick={handleHome}
+            aria-label="Ir a inicio"
             className="
               w-full flex items-center justify-center gap-2 py-3
               text-white hover:bg-white hover:bg-opacity-10
               transition-all duration-200
             "
           >
-            <Home size={18} />
+            <Home size={18} aria-hidden="true" />
             <span className="font-raleway font-medium text-sm">Inicio</span>
           </button>
         </div>
-      </div>
+      </nav>
     </header>
   );
 };

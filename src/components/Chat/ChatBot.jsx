@@ -3,7 +3,6 @@ import { MessageCircle, X } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import ChatThinking from './ChatThinking';
-import { sendMessage } from '../../services/chatbot';
 import { useUserStore } from '../../store/userStore';
 import toast from 'react-hot-toast';
 
@@ -46,43 +45,53 @@ const ChatBot = () => {
     setIsThinking(true);
 
     try {
-      // Llamar al servicio del chatbot con contexto
-      const context = {
-        userId: user?.id,
+      // Integración co N8N
+    const payload = {
+      message: text,
+      empleado_id: user?.id,
+      documento: user?.documento,
+      context: {
         role: user?.role,
         userName: user?.name,
-      };
+        area_id: user?.area_id
+      }
+    };
 
-      const response = await sendMessage(text, context);
+    const response = await fetch('https://comfachoco.app.n8n.cloud/webhook/chatbot-agenda', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-      // Agregar respuesta del bot
-      const botMessage = {
-        id: Date.now() + 1,
-        text: response.text,
-        sender: 'bot',
-        timestamp: new Date().toISOString(),
-        action: response.action, // metadata adicional
-        data: response.data, // data para acciones futuras
-        validations: response.validations, // validaciones del chatbot
-      };
+    const result = await response.json();
 
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      toast.error('Error al enviar mensaje');
-      console.error('Error en chatbot:', error);
+    // Agregar respuesta del bot
+    const botMessage = {
+      id: Date.now() + 1,
+      text: result.text || result.message || "Respuesta del sistema",
+      sender: 'bot',
+      timestamp: new Date().toISOString(),
+      data: result.data || {}
+    };
 
-      // Agregar mensaje de error del bot
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: '😔 Lo siento, hubo un error procesando tu mensaje. ¿Puedes intentar de nuevo?',
-        sender: 'bot',
-        timestamp: new Date().toISOString(),
-      };
+    setMessages((prev) => [...prev, botMessage]);
 
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsThinking(false);
-    }
+  } catch (error) {
+    toast.error('Error al enviar mensaje');
+    console.error('Error en chatbot N8N:', error);
+    
+    // Mensaje de error
+    const errorMessage = {
+      id: Date.now() + 1,
+      text: 'Lo siento, hubo un error. ¿Puedes intentar de nuevo?',
+      sender: 'bot',
+      timestamp: new Date().toISOString(),
+    };
+    
+    setMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setIsThinking(false);
+  }
   };
 
   return (

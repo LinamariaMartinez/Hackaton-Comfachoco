@@ -714,7 +714,7 @@ const SupervisorDashboard = () => {
         <main style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }} className="lg:grid-cols-5">
             {/* COLUMNA IZQUIERDA - Calendario (60% en desktop) */}
-            <div className="lg:col-span-3" style={{ order: 2 }} className="lg:order-1">
+            <div className="lg:col-span-3 lg:order-1" style={{ order: 2 }}>
               <div style={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: '24px',
@@ -761,7 +761,7 @@ const SupervisorDashboard = () => {
             </div>
 
             {/* COLUMNA DERECHA - Conflictos y Detalles (40% en desktop) */}
-            <div className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '24px', order: 1 }} className="lg:order-2">
+            <div className="lg:col-span-2 lg:order-2" style={{ display: 'flex', flexDirection: 'column', gap: '24px', order: 1 }}>
               {/* Conflictos */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>

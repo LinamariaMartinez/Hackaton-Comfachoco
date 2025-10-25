@@ -46,8 +46,13 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #04B45F 0%, #026636 100%)' }}>
+      {/* Accessibility: Skip to main content */}
+      <a href="#login-form" className="skip-to-main">
+        Saltar al formulario de inicio de sesión
+      </a>
+
       {/* Card de Login */}
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md" role="main">
         <div className="bg-white rounded-2xl shadow-2xl" style={{ padding: '2.5rem' }}>
 
           {/* Logo y Marca */}
@@ -77,21 +82,24 @@ const Login = () => {
           </div>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <form id="login-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} aria-label="Formulario de inicio de sesión">
 
             {/* Campo Email */}
             <div>
-              <label className="font-semibold block" style={{ fontFamily: 'Raleway, sans-serif', color: '#303030', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <label htmlFor="email-input" className="font-semibold block" style={{ fontFamily: 'Raleway, sans-serif', color: '#303030', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                 Correo Electrónico
               </label>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#8A8A8A' }}>
+                <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#8A8A8A' }} aria-hidden="true">
                   <Mail size={20} />
                 </div>
                 <input
+                  id="email-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  aria-required="true"
+                  aria-label="Correo electrónico"
                   style={{
                     width: '100%',
                     paddingLeft: '3rem',
@@ -122,17 +130,20 @@ const Login = () => {
 
             {/* Campo Contraseña */}
             <div>
-              <label className="font-semibold block" style={{ fontFamily: 'Raleway, sans-serif', color: '#303030', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <label htmlFor="password-input" className="font-semibold block" style={{ fontFamily: 'Raleway, sans-serif', color: '#303030', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                 Contraseña
               </label>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#8A8A8A' }}>
+                <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#8A8A8A' }} aria-hidden="true">
                   <Lock size={20} />
                 </div>
                 <input
+                  id="password-input"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  aria-required="true"
+                  aria-label="Contraseña"
                   style={{
                     width: '100%',
                     paddingLeft: '3rem',
@@ -165,6 +176,8 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
+              aria-label={loading ? "Iniciando sesión..." : "Iniciar sesión"}
+              aria-busy={loading}
               className="font-bold text-white flex items-center justify-center"
               style={{
                 width: '100%',

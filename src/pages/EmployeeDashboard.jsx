@@ -721,6 +721,61 @@ const EmployeeDashboard = () => {
                           </div>
                         </div>
                       ))}
+
+                      {/* Botones de preguntas rápidas (solo se muestran al inicio) */}
+                      {chatMessages.length <= 3 && (
+                        <div style={{ marginTop: '16px' }}>
+                          <p style={{
+                            fontFamily: 'Raleway, sans-serif',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                            color: '#303030',
+                            marginBottom: '12px',
+                          }}>
+                            💬 Preguntas frecuentes:
+                          </p>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr',
+                            gap: '8px',
+                          }}
+                          className="sm:grid-cols-2"
+                          >
+                            {quickQuestions.map((question) => (
+                              <button
+                                key={question.id}
+                                onClick={() => handleQuickQuestion(question)}
+                                style={{
+                                  backgroundColor: '#FFFFFF',
+                                  border: '2px solid #e5e7eb',
+                                  borderRadius: '12px',
+                                  padding: '12px',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  fontFamily: 'Roboto, sans-serif',
+                                  fontSize: '0.875rem',
+                                  color: '#303030',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#04B45F';
+                                  e.currentTarget.style.backgroundColor = '#f0fdf4';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = '#e5e7eb';
+                                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                                }}
+                              >
+                                <span style={{ fontSize: '1.25rem' }}>{question.icon}</span>
+                                <span>{question.text}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Input */}
@@ -729,6 +784,76 @@ const EmployeeDashboard = () => {
                       backgroundColor: '#FFFFFF',
                       borderTop: '1px solid #e5e7eb',
                     }}>
+                      {/* Botón de adjuntar archivo (solo visible cuando se solicita licencia/incapacidad) */}
+                      {showFileUpload && (
+                        <div style={{
+                          marginBottom: '12px',
+                          padding: '12px',
+                          backgroundColor: '#fef3c7',
+                          borderRadius: '8px',
+                          border: '1px solid #fde047',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Paperclip size={20} style={{ color: '#ca8a04' }} />
+                              <span style={{
+                                fontFamily: 'Roboto, sans-serif',
+                                fontSize: '0.875rem',
+                                color: '#854d0e',
+                              }}>
+                                {attachedFile ? `Archivo: ${attachedFile.name}` : 'Adjunta tu documento'}
+                              </span>
+                            </div>
+                            {!attachedFile ? (
+                              <button
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{
+                                  backgroundColor: '#04B45F',
+                                  color: '#FFFFFF',
+                                  padding: '8px 16px',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontFamily: 'Raleway, sans-serif',
+                                  fontWeight: 600,
+                                  fontSize: '0.75rem',
+                                  transition: 'background-color 0.2s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#026636'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#04B45F'}
+                              >
+                                Seleccionar archivo
+                              </button>
+                            ) : (
+                              <button
+                                onClick={handleRemoveFile}
+                                style={{
+                                  backgroundColor: '#ef4444',
+                                  color: '#FFFFFF',
+                                  padding: '6px',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.2s',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+                              >
+                                <CloseIcon size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                      />
+
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                           type="text"

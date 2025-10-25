@@ -19,6 +19,7 @@ export const useUserStore = create(
             name: user.name,
             email: user.email,
             role: user.role || role,
+            documento: user.documento || user.cedula || "12345678",
             department: user.department || null,
             balance: user.balance || {
               totalDays: 15,

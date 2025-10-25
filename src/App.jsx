@@ -1,10 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
-import Login from './pages/Login';
-import EmployeeDashboard from './pages/EmployeeDashboard';
-import SupervisorDashboard from './pages/SupervisorDashboard';
-import HRDashboard from './pages/HRDashboard';
+import LoadingSpinner from './components/Common/LoadingSpinner';
 import { useUserStore } from './store/userStore';
+
+// Lazy loading de páginas para code splitting
+const Login = lazy(() => import('./pages/Login'));
+const EmployeeDashboard = lazy(() => import('./pages/EmployeeDashboard'));
+const SupervisorDashboard = lazy(() => import('./pages/SupervisorDashboard'));
+const HRDashboard = lazy(() => import('./pages/HRDashboard'));
 
 // Componente para proteger rutas privadas
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -30,6 +34,19 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   return children;
 };
+
+// Componente de loading para Suspense
+const SuspenseLoader = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#F9F9FC',
+  }}>
+    <LoadingSpinner />
+  </div>
+);
 
 function App() {
   const { isAuthenticated } = useUserStore();
@@ -62,7 +79,8 @@ function App() {
         }}
       />
 
-      <Routes>
+      <Suspense fallback={<SuspenseLoader />}>
+        <Routes>
         {/* Ruta pública - Login */}
         <Route
           path="/"
@@ -116,7 +134,8 @@ function App() {
             )
           }
         />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

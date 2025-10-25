@@ -1,6 +1,40 @@
+/* export const login = async (email, password) => {
+  try {
+    const response = await fetch('https://comfachoco.app.n8n.cloud/webhook/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const result = await response.json();
+    
+    // N8N debería devolver datos completos del usuario
+    return {
+      data: {
+        id: result.empleado_id,
+        name: result.nombre_completo,        // <-- Nombre real del usuario
+        email: result.email,
+        documento: result.documento,         // <-- Para el chatbot
+        role: result.role,
+        department: result.area_nombre,      // <-- Nombre real del departamento
+        area_id: result.area_id,
+        balance: {
+          totalDays: result.dias_asignados,
+          usedDays: result.dias_usados,
+          remainingDays: result.dias_disponibles,
+          pendingRequests: result.solicitudes_pendientes
+        }
+      }
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+ */
+
 import api from './api';
 
-// Mock users para desarrollo
+ // Mock users para desarrollo
 const mockUsers = {
   'empleado@comfachoco.com': {
     password: '123456',
@@ -82,3 +116,4 @@ export const getCurrentUser = async () => {
 
   return null;
 };
+
