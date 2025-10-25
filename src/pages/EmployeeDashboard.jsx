@@ -41,16 +41,18 @@ const EmployeeDashboard = () => {
 
   // Auto-load user-related data cuando esté disponible el documento
   useEffect(() => {
-    if (!user?.documento) {
+    const documento = user?.documento || user?.numero_documento;
+    if (!documento) {
       toast.error("No tienes número de documento configurado");
       return;
     }
     loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.documento]);
+  }, [user?.documento, user?.numero_documento]);
 
   const loadInitialData = async () => {
-    if (!user?.documento) return;
+    const documento = user?.documento || user?.numero_documento;
+    if (!documento) return;
 
     setLoading(true);
     try {
@@ -78,7 +80,7 @@ const EmployeeDashboard = () => {
   // Datos derivados del usuario y saldo
   const userData = {
     name: user?.name || "Usuario",
-    document: user?.documento || "Sin documento",
+    document: user?.documento || user?.numero_documento || "Sin documento",
     department: user?.department || "Sin área",
     balance: saldo
       ? {
@@ -198,8 +200,9 @@ const EmployeeDashboard = () => {
     return badges[status] || badges.pending;
   };
 
-  // Validación: Usuario sin documento
-  if (!user?.documento) {
+  // Validación: Usuario sin documento (verificar ambos campos)
+  const documento = user?.documento || user?.numero_documento;
+  if (!documento) {
     return (
       <div
         style={{
@@ -250,9 +253,9 @@ const EmployeeDashboard = () => {
           >
             Usuario actual: {user?.name || "Sin nombre"}
             <br />
-            Email: {user?.email || "Sin email"}
+            Email: {user?.email || user?.email_corp || "Sin email"}
             <br />
-            Documento: {user?.documento || "❌ NO CONFIGURADO"}
+            Documento: {user?.documento || user?.numero_documento || "❌ NO CONFIGURADO"}
           </p>
         </div>
       </div>

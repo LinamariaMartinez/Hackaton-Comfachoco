@@ -2,6 +2,49 @@
 import toast from "react-hot-toast";
 import { loginUser as loginUserChatbot } from "./chatbot";
 
+// 🔥 Credenciales de demostración (fallback mientras N8N no esté disponible)
+const DEMO_CREDENTIALS = {
+  "empleado@comfachoco.com": {
+    password: "123456",
+    user: {
+      id: "demo-emp-001",
+      name: "Juan Pérez Empleado",
+      email_corp: "empleado@comfachoco.com",
+      rol: "empleado",
+      role: "employee",
+      department: "Desarrollo",
+      numero_documento: "123456789",
+    },
+    token: "demo-token-empleado",
+  },
+  "supervisor@comfachoco.com": {
+    password: "123456",
+    user: {
+      id: "demo-sup-001",
+      name: "María García Supervisor",
+      email_corp: "supervisor@comfachoco.com",
+      rol: "supervisor",
+      role: "supervisor",
+      department: "Operaciones",
+      numero_documento: "987654321",
+    },
+    token: "demo-token-supervisor",
+  },
+  "rrhh@comfachoco.com": {
+    password: "123456",
+    user: {
+      id: "demo-hr-001",
+      name: "Carlos Rodríguez RRHH",
+      email_corp: "rrhh@comfachoco.com",
+      rol: "rrhh",
+      role: "hr",
+      department: "Recursos Humanos",
+      numero_documento: "456789123",
+    },
+    token: "demo-token-rrhh",
+  },
+};
+
 /**
  * Login de usuario
  * @param {string} email - Email del usuario
@@ -10,6 +53,26 @@ import { loginUser as loginUserChatbot } from "./chatbot";
  */
 export const loginUser = async (email, password) => {
   try {
+    // 🔥 PRIMERO: Verificar credenciales de demostración (fallback sin backend)
+    const demoUser = DEMO_CREDENTIALS[email];
+    if (demoUser && demoUser.password === password) {
+      console.log("✅ Login con credenciales de demostración:", email);
+
+      // Guardar en localStorage
+      localStorage.setItem("user", JSON.stringify(demoUser.user));
+      localStorage.setItem("token", demoUser.token);
+
+      toast.success(`¡Bienvenido ${demoUser.user.name}!`);
+
+      return {
+        success: true,
+        role: demoUser.user.rol,
+        user: demoUser.user,
+        token: demoUser.token,
+      };
+    }
+
+    // Si no es credencial de demo, intentar con N8N
     console.log("🔐 Intentando login con N8N (chatbot.js)...");
     console.log("Request payload:", {
       email_corp: email,
