@@ -14,9 +14,11 @@ const HRDashboard = lazy(() => import('./pages/HRDashboard'))
 // Componente para proteger rutas privadas
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useUserStore()
-  const role = user?.role
 
-  console.log('🛡️ ProtectedRoute - isAuthenticated:', isAuthenticated, 'role:', role)
+  // 🔥 IMPORTANTE: Leer rol de localStorage.user.rol (compatibilidad con N8N)
+  const role = user?.rol || user?.role
+
+  console.log('🛡️ ProtectedRoute - isAuthenticated:', isAuthenticated, 'user:', user, 'role:', role)
 
   if (!isAuthenticated) {
     console.log('❌ No autenticado, redirigiendo a login')
@@ -28,12 +30,15 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     // Redirigir según el rol del usuario
     switch (role) {
       case 'employee':
+      case 'empleado':
         return <Navigate to="/empleado" replace />
       case 'supervisor':
         return <Navigate to="/supervisor" replace />
       case 'hr':
+      case 'rrhh':
         return <Navigate to="/rrhh" replace />
       default:
+        console.warn('⚠️ Rol desconocido:', role, '- redirigiendo a login')
         return <Navigate to="/" replace />
     }
   }
@@ -57,7 +62,7 @@ const SuspenseLoader = () => (
 
 function App() {
   const { isAuthenticated, isLoading, initializeAuth, user } = useUserStore()
-  
+
   // 🔥 IMPORTANTE: Inicializar auth al cargar la app
   useEffect(() => {
     console.log('🚀 App montado, inicializando auth...')
@@ -73,6 +78,26 @@ function App() {
   if (isLoading) {
     console.log('⏳ Mostrando loader...')
     return <SuspenseLoader />
+  }
+
+  // Helper: Obtener ruta por rol del usuario
+  const getRoleRoute = (user) => {
+    const role = user?.rol || user?.role
+    console.log('🔄 getRoleRoute - rol:', role)
+
+    switch (role) {
+      case 'employee':
+      case 'empleado':
+        return '/empleado'
+      case 'supervisor':
+        return '/supervisor'
+      case 'hr':
+      case 'rrhh':
+        return '/rrhh'
+      default:
+        console.warn('⚠️ Rol desconocido:', role)
+        return '/empleado' // Fallback
+    }
   }
 
   return (
@@ -110,7 +135,7 @@ function App() {
             path="/"
             element={
               isAuthenticated ? (
-                <Navigate to="/empleado" replace />
+                <Navigate to={getRoleRoute(user)} replace />
               ) : (
                 <Login />
               )
@@ -121,7 +146,7 @@ function App() {
           <Route
             path="/empleado"
             element={
-              <ProtectedRoute allowedRoles={['employee']}>
+              <ProtectedRoute allowedRoles={['employee', 'empleado']}>
                 <EmployeeDashboard />
               </ProtectedRoute>
             }
@@ -141,18 +166,18 @@ function App() {
           <Route
             path="/rrhh"
             element={
-              <ProtectedRoute allowedRoles={['hr']}>
+              <ProtectedRoute allowedRoles={['hr', 'rrhh']}>
                 <HRDashboard />
               </ProtectedRoute>
             }
           />
 
-          {/* Ruta 404 - Redirige según autenticación */}
+          {/* Ruta 404 - Redirige según autenticación y rol */}
           <Route
             path="*"
             element={
               isAuthenticated ? (
-                <Navigate to="/empleado" replace />
+                <Navigate to={getRoleRoute(user)} replace />
               ) : (
                 <Navigate to="/" replace />
               )

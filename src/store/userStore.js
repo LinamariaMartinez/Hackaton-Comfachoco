@@ -85,19 +85,23 @@ const useUserStore = create(
 
       // Getters
       get role() {
-        return get().user?.role
+        // 🔥 IMPORTANTE: Soportar tanto .rol (N8N) como .role (legacy)
+        return get().user?.rol || get().user?.role
       },
 
       get isEmployee() {
-        return get().user?.role === 'employee'
+        const role = get().user?.rol || get().user?.role
+        return role === 'employee' || role === 'empleado'
       },
 
       get isSupervisor() {
-        return get().user?.role === 'supervisor'
+        const role = get().user?.rol || get().user?.role
+        return role === 'supervisor'
       },
 
       get isHR() {
-        return get().user?.role === 'hr'
+        const role = get().user?.rol || get().user?.role
+        return role === 'hr' || role === 'rrhh'
       }
     }),
     {
