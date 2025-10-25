@@ -31,10 +31,10 @@ const ChatbotAssistant = ({
       console.log('💾 Cargando historial de chat desde localStorage');
       setChatMessages(storedHistory);
     } else if (chatMessages.length === 0) {
-      // Si no hay historial, crear mensaje de bienvenida
+      // Si no hay historial, crear mensaje de bienvenida con el menú
       const welcomeMessage = {
         id: Date.now(),
-        text: `¡Hola, ${userData.name || "Usuario"}! 👋\n\nSoy tu asistente de Comfachocó. ¿En qué puedo ayudarte hoy?`,
+        text: `¡Hola, ${userData.name || "Usuario"}! 👋\n\nSoy tu asistente de Comfachocó. Puedo ayudarte con:\n\n1️⃣ Solicitar vacaciones o licencias\n2️⃣ Consultar tu saldo de días disponibles\n3️⃣ Registrar incapacidades médicas\n4️⃣ Ver disponibilidad de tu equipo\n5️⃣ Información sobre políticas de RRHH\n\nEscribe el número de la opción o pregúntame directamente. 😊`,
         sender: "bot",
         time: new Date().toLocaleTimeString("es-ES", {
           hour: "2-digit",

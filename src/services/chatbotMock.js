@@ -47,12 +47,30 @@ const INITIAL_MOCK_REQUESTS = [
 ];
 
 /**
- * Detecta qué tipo de pregunta es basándose en palabras clave
+ * Detecta qué tipo de pregunta es basándose en palabras clave o números
  */
 const detectQuestionType = (message) => {
-  const msg = message.toLowerCase();
+  const msg = message.toLowerCase().trim();
 
-  if (msg.includes("vacacion") && msg.includes("solicito")) {
+  // Detectar números (1-5)
+  if (msg === "1" || msg === "1️⃣") {
+    return "how_to_request_vacation";
+  }
+  if (msg === "2" || msg === "2️⃣") {
+    return "check_balance";
+  }
+  if (msg === "3" || msg === "3️⃣") {
+    return "request_leave";
+  }
+  if (msg === "4" || msg === "4️⃣") {
+    return "medical_leave";
+  }
+  if (msg === "5" || msg === "5️⃣") {
+    return "team_availability";
+  }
+
+  // Detectar por palabras clave
+  if (msg.includes("vacacion") || msg.includes("solicito vacacion")) {
     return "how_to_request_vacation";
   }
   if (msg.includes("días") && msg.includes("disponible")) {
@@ -61,11 +79,14 @@ const detectQuestionType = (message) => {
   if (msg.includes("solicitar") && msg.includes("licencia")) {
     return "request_leave";
   }
-  if (msg.includes("incapacidad") && msg.includes("médica")) {
+  if (msg.includes("incapacidad") || msg.includes("médica")) {
     return "medical_leave";
   }
   if (msg.includes("disponibilidad") && msg.includes("equipo")) {
     return "team_availability";
+  }
+  if (msg.includes("política") || msg.includes("políticas")) {
+    return "general";
   }
 
   return "general";
@@ -113,7 +134,7 @@ export const getMockChatbotResponse = (message, userData = {}) => {
     },
 
     general: {
-      text: `¡Hola ${userName}! 👋\n\nPuedo ayudarte con:\n\n🏖️ Solicitar vacaciones o licencias\n📊 Consultar tu saldo de días disponibles\n🏥 Registrar incapacidades médicas\n👥 Ver disponibilidad de tu equipo\n📝 Información sobre políticas de RRHH\n\n¿En qué puedo ayudarte específicamente?`,
+      text: `¡Hola ${userName}! 👋\n\nPuedo ayudarte con:\n\n1️⃣ Solicitar vacaciones o licencias\n2️⃣ Consultar tu saldo de días disponibles\n3️⃣ Registrar incapacidades médicas\n4️⃣ Ver disponibilidad de tu equipo\n5️⃣ Información sobre políticas de RRHH\n\nEscribe el número de la opción o pregúntame directamente. 😊`,
       needFile: false,
     },
   };
