@@ -230,8 +230,25 @@ O usar el botón "Cerrar Sesión" en cualquier dashboard.
 
 Este proyecto fue desarrollado para el **Hackathon Comfachocó 2025**.
 
-### Equipo de Desarrollo
+## Equipo de Desarrollo
+### Jennifer Salazar Duque : 
+[![GitHub](https://img.shields.io/badge/GitHub-SalazarDukeImpactHub-black?logo=github)](https://github.com/SalazarDukeImpactHub)
+[![LinkedIN](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/jennifer-salazar-duke-1194b2289/)
 
+### Linamaria Martínez Pulido : 
+[![GitHub](https://img.shields.io/badge/GitHub-LinamariaMartinez-black?logo=github)](https://github.com/LinamariaMartinez)
+[![LinkedIN](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/linamariamartinezp/)
+
+### Emanuel López Franco : 
+[![GitHub](https://img.shields.io/badge/GitHub-ema28pro-black?logo=github)](https://github.com/ema28pro)
+[![LinkedIN](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/emanuel-lopez-franco-/)
+
+### Alvaro Henao Gonzalez : 
+[![GitHub](https://img.shields.io/badge/GitHub-ahenao1256-black?logo=github)](https://github.com/ahenao1256)
+[![LinkedIN](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/alvaro-henao-gonzalez-04353823b/)
+
+### Sebastian Chisavo Forero : 
+[![GitHub](https://img.shields.io/badge/GitHub-schisavo-black?logo=github)](https://github.com/schisavo)
 
 ## 📄 Licencia
 
