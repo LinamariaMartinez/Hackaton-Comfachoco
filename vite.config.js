@@ -41,6 +41,6 @@ export default defineConfig({
   server: {
     hmr: {
       overlay: true,
-    },
+    }
   },
 })

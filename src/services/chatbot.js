@@ -1,9 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Use full URL since we're accessing n8n directly
+const API_BASE_URL = 'https://comfachoco.app.n8n.cloud';
 const ENDPOINTS = {
   CREATE_REQUEST: "/webhook/chatbot-agenda",
-  GET_REQUESTS: "/webhook/gestion-solicitudes",
-  APPROVE_REQUEST: "/webhook/aprobar-solicitud",
-  REJECT_REQUEST: "/webhook/rechazar-solicitud",
+  GET_REQUESTS: "/webhook/chatbot-agenda",
+  APPROVE_REQUEST: "/webhook/chatbot-agenda",
+  REJECT_REQUEST: "/webhook/chatbot-agenda",
   /* // Próximos endpoints
   LOGIN_USER: '/webhook/iniciar-sesion',
   REGISTER_USER: '/webhook/registrar-usuario',
@@ -328,22 +329,34 @@ export const sendMessage = async (message, context = {}) => {
 
     if (!responseText.trim()) {
       return {
-        text: `✅ Tu consulta "${message}" ha sido procesada correctamente.`,
+        text: "Lo siento, no he podido procesar tu consulta. ¿Podrías reformularla?",
         action: "backend_response",
-        data: { status: "processed", empty_response: true },
+        data: { status: "empty_response" },
       };
     }
 
     try {
       const result = JSON.parse(responseText);
+      const userName = user ? `${user.primer_nombre || ''} ${user.primer_apellido || ''}`.trim() : '';
+      
+      // Si tenemos una respuesta del modelo de n8n, la usamos directamente
+      const assistantMessage = result.respuesta || result.message || responseText;
+      
+      // Si hay un nombre de usuario y el mensaje comienza con un saludo genérico, personalizarlo
+      const greetings = ['hola', 'buenos días', 'buenas tardes', 'buenas noches'];
+      const lowerMessage = assistantMessage.toLowerCase();
+      const isGreeting = greetings.some(greeting => lowerMessage.startsWith(greeting));
+      
+      const formattedMessage = isGreeting && userName
+        ? assistantMessage.replace(/^(hola|buenos días|buenas tardes|buenas noches)/i, `$1 ${userName}`)
+        : assistantMessage;
+
       return {
-        text: result.respuesta || result.message || responseText,
+        text: formattedMessage,
         action: "backend_response",
         data: result,
       };
     } catch (jsonError) {
-      // En caso de que la respuesta no sea JSON válido, registramos el error para debugging
-      // y devolvemos el texto crudo como fallback.
       console.debug("JSON parse error:", jsonError);
       return {
         text: responseText,
