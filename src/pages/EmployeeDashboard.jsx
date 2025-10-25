@@ -20,6 +20,12 @@ import {
   sendMessage,
   submitRequest,
 } from "../services/chatbot";
+import {
+  getMockChatbotResponse,
+  mockSubmitRequest,
+  mockConsultarSaldo,
+  mockGetSolicitudes,
+} from "../services/chatbotMock";
 import toast from "react-hot-toast";
 import logo from "/logo-comfachoco-no-lema.svg";
 
@@ -56,18 +62,30 @@ const EmployeeDashboard = () => {
 
     setLoading(true);
     try {
-      // Consultar saldo
-      const saldoResult = await consultarSaldo(user);
-      if (saldoResult.success) {
-        setSaldo(saldoResult);
-      } else {
-        toast.error("Error consultando saldo: " + saldoResult.message);
-      }
+      // 🔥 Detectar si es usuario demo (credenciales mock)
+      const isDemoUser = user?.id?.startsWith("demo-") || user?.token?.startsWith("demo-token");
 
-      // Consultar solicitudes
-      const solicitudesResult = await getSolicitudes(user);
-      if (solicitudesResult.success) {
+      if (isDemoUser) {
+        console.log("🎭 Modo Demo - Usando datos mock");
+        // Usar datos mock
+        const saldoResult = mockConsultarSaldo(user);
+        setSaldo(saldoResult);
+
+        const solicitudesResult = mockGetSolicitudes();
         setSolicitudes(solicitudesResult.solicitudes || []);
+      } else {
+        // Usar backend real
+        const saldoResult = await consultarSaldo(user);
+        if (saldoResult.success) {
+          setSaldo(saldoResult);
+        } else {
+          toast.error("Error consultando saldo: " + saldoResult.message);
+        }
+
+        const solicitudesResult = await getSolicitudes(user);
+        if (solicitudesResult.success) {
+          setSolicitudes(solicitudesResult.solicitudes || []);
+        }
       }
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -127,10 +145,21 @@ const EmployeeDashboard = () => {
   // onSendMessage: wrapper que usa la función `sendMessage` del servicio.
   const handleSendMessage = async (message = {}) => {
     try {
-      // sendMessage espera (message, { user })
-      const response = await sendMessage(message, { user });
-      // Retornamos lo que el servicio devuelva para que el componente lo interprete
-      return response;
+      // 🔥 Detectar si es usuario demo
+      const isDemoUser = user?.id?.startsWith("demo-") || user?.token?.startsWith("demo-token");
+
+      if (isDemoUser) {
+        console.log("🎭 Modo Demo - Usando respuesta mock para:", message);
+        // Usar respuestas mock
+        const response = getMockChatbotResponse(message, user);
+        // Simular delay de red para realismo
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return response;
+      } else {
+        // Usar backend real
+        const response = await sendMessage(message, { user });
+        return response;
+      }
     } catch (error) {
       console.error("Error enviando mensaje desde EmployeeDashboard:", error);
       return {
@@ -142,21 +171,36 @@ const EmployeeDashboard = () => {
 
   const handleSubmitRequest = async (payload = {}) => {
     try {
-      const requestData = {
-        proceso_solicitado:
-          payload.type || payload.proceso_solicitado || "vacaciones",
-        fecha_inicio: payload.fecha_inicio || new Date().toISOString(),
-        fecha_fin: payload.fecha_fin || new Date().toISOString(),
-        mensaje:
-          payload.mensaje || `Solicitud de ${payload.type || "vacaciones"}`,
-      };
+      // 🔥 Detectar si es usuario demo
+      const isDemoUser = user?.id?.startsWith("demo-") || user?.token?.startsWith("demo-token");
 
-      const result = await submitRequest(requestData, user);
-      // Si se envía correctamente, refrescar datos del dashboard
-      if (result && result.success) {
-        await loadInitialData();
+      if (isDemoUser) {
+        console.log("🎭 Modo Demo - Enviando solicitud mock:", payload);
+        // Usar mock
+        const result = await mockSubmitRequest(payload);
+        // Refrescar datos mock
+        if (result && result.success) {
+          await loadInitialData();
+        }
+        return result;
+      } else {
+        // Usar backend real
+        const requestData = {
+          proceso_solicitado:
+            payload.type || payload.proceso_solicitado || "vacaciones",
+          fecha_inicio: payload.fecha_inicio || new Date().toISOString(),
+          fecha_fin: payload.fecha_fin || new Date().toISOString(),
+          mensaje:
+            payload.mensaje || `Solicitud de ${payload.type || "vacaciones"}`,
+        };
+
+        const result = await submitRequest(requestData, user);
+        // Si se envía correctamente, refrescar datos del dashboard
+        if (result && result.success) {
+          await loadInitialData();
+        }
+        return result;
       }
-      return result;
     } catch (error) {
       console.error("Error enviando solicitud desde EmployeeDashboard:", error);
       return {
