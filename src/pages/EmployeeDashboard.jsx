@@ -1,52 +1,79 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Calendar, History, LogOut, Send, Menu, X as CloseIcon, Paperclip, FileText, Download } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import CalendarMini from '../components/Common/CalendarMini';
 import CalendarFull from '../components/Common/CalendarFull';
+import { consultarSaldo, consultarEstadoLicencias, submitRequest, sendMessage } from '../services/chatbot';
 import toast from 'react-hot-toast';
 
 /**
- * Dashboard del Empleado - Diseño Corporativo Comfachocó
- * Solo colores corporativos y estilos en línea
+ * Dashboard del Empleado - Integrado con N8N y Supabase
  */
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useUserStore();
   const [activeTab, setActiveTab] = useState('chatbot');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedDates, setSelectedDates] = useState([
-    '2024-11-10',
-    '2024-11-11',
-    '2024-11-12',
-    '2024-11-13',
-    '2024-11-14',
-  ]);
+  const [selectedDates, setSelectedDates] = useState([]);
+  
+  // 🔥 ESTADOS 
+  const [loading, setLoading] = useState(false);
+  const [saldo, setSaldo] = useState(null);
+  const [solicitudes, setSolicitudes] = useState([]);
   const [chatMessages, setChatMessages] = useState([
     {
       id: 1,
-      text: '¡Hola! Soy tu asistente de Comfachocó. ¿En qué puedo ayudarte?',
+      text: `¡Hola ${user?.name || 'Usuario'}! Soy tu asistente de Comfachocó. ¿En qué puedo ayudarte?`,
       sender: 'bot',
-      time: '10:00',
-    },
-    {
-      id: 2,
-      text: 'Quiero solicitar vacaciones del 10 al 14 de noviembre',
-      sender: 'user',
-      time: '10:01',
-    },
-    {
-      id: 3,
-      text: '✅ He analizado tu solicitud:\n\n📅 Fechas: 10-14 de noviembre (5 días)\n💼 Saldo actual: 10 días\n\n✅ Saldo suficiente\n✅ Sin conflictos de equipo\n✅ Capacidad del equipo: OK\n\n¡Tu solicitud ha sido APROBADA AUTOMÁTICAMENTE! 🎉',
-      sender: 'bot',
-      time: '10:01',
-    },
+      time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    }
   ]);
+  
   const [messageInput, setMessageInput] = useState('');
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
   const [pendingRequestType, setPendingRequestType] = useState(null);
   const fileInputRef = useRef(null);
+
+  // 🔥 VALIDAR USUARIO Y DOCUMENTO
+  useEffect(() => {
+    if (!user?.documento) {
+      toast.error('No tienes número de documento configurado')
+      return
+    }
+    loadInitialData()
+  }, [user?.documento])
+
+  // 🔥 CARGAR DATOS DESDE N8N
+  const loadInitialData = async () => {
+    if (!user?.documento) return
+    
+    setLoading(true)
+    try {
+      // Consultar saldo 
+      const saldoResult = await consultarSaldo(user)
+      if (saldoResult.success) {
+        setSaldo(saldoResult)
+      } else {
+        toast.error('Error consultando saldo: ' + saldoResult.message)
+      }
+
+      // Consultar solicitudes
+      const solicitudesResult = await consultarEstadoLicencias(user)
+      if (solicitudesResult.success) {
+        setSolicitudes(solicitudesResult.solicitudes || [])
+      } else {
+        console.warn('No se pudieron cargar las solicitudes:', solicitudesResult.message)
+      }
+      
+    } catch (error) {
+      console.error('Error cargando datos:', error)
+      toast.error('Error cargando datos del usuario')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Preguntas rápidas dinámicas
   const quickQuestions = [
@@ -57,82 +84,32 @@ const EmployeeDashboard = () => {
     { id: 5, text: 'Ver disponibilidad del equipo', icon: '👥' },
   ];
 
+  // 🔥 DATOS DEL USUARIO 
   const userData = {
-    name: user?.name || 'Juan Pérez',
-    department: 'Desarrollo',
-    balance: {
-      totalDays: 15,
-      usedDays: 5,
-      remainingDays: 10,
-    },
+    name: user?.name || 'Usuario',
+    document: user?.documento || 'Sin documento',
+    department: user?.department || 'Sin área',
+    balance: saldo ? {
+      totalDays: saldo.total || 0,
+      usedDays: saldo.usado || 0,
+      remainingDays: saldo.saldo || 0,
+    } : {
+      totalDays: 0,
+      usedDays: 0,
+      remainingDays: 0,
+    }
   };
 
-  const requestsHistory = [
-    {
-      id: 1,
-      type: 'Vacaciones',
-      startDate: '2024-10-15',
-      endDate: '2024-10-20',
-      days: 5,
-      status: 'approved',
-      attachments: [],
-    },
-    {
-      id: 2,
-      type: 'Permiso Personal',
-      startDate: '2024-11-10',
-      endDate: '2024-11-14',
-      days: 5,
-      status: 'pending',
-      attachments: [],
-    },
-    {
-      id: 3,
-      type: 'Incapacidad Médica',
-      startDate: '2024-09-15',
-      endDate: '2024-09-20',
-      days: 5,
-      status: 'approved',
-      attachments: [
-        { name: 'incapacidad_medica.pdf', size: '245 KB' },
-      ],
-    },
-    {
-      id: 4,
-      type: 'Licencia de Paternidad',
-      startDate: '2024-08-01',
-      endDate: '2024-08-15',
-      days: 14,
-      status: 'pending',
-      attachments: [
-        { name: 'certificado_nacimiento.pdf', size: '1.2 MB' },
-        { name: 'registro_civil.pdf', size: '890 KB' },
-      ],
-    },
-    {
-      id: 5,
-      type: 'Vacaciones',
-      startDate: '2024-07-10',
-      endDate: '2024-07-17',
-      days: 7,
-      status: 'rejected',
-      attachments: [],
-    },
-  ];
-
-  const calendarEvents = [
-    { date: '2024-11-10', name: 'Tú', type: 'Permiso Personal', color: 'green' },
-    { date: '2024-11-11', name: 'Tú', type: 'Permiso Personal', color: 'green' },
-    { date: '2024-11-12', name: 'Tú', type: 'Permiso Personal', color: 'green' },
-    { date: '2024-11-13', name: 'Tú', type: 'Permiso Personal', color: 'green' },
-    { date: '2024-11-14', name: 'Tú', type: 'Permiso Personal', color: 'green' },
-    { date: '2024-11-15', name: 'Ana Martínez', type: 'Vacaciones', color: 'green' },
-    { date: '2024-11-15', name: 'Pedro García', type: 'Permiso', color: 'orange' },
-    { date: '2024-11-20', name: 'María Silva', type: 'Vacaciones', color: 'green' },
-    { date: '2024-11-25', name: 'Juan Rodríguez', type: 'Licencia', color: 'green' },
-    { date: '2024-11-25', name: 'Laura Gómez', type: 'Permiso', color: 'orange' },
-    { date: '2024-11-25', name: 'Diego Torres', type: 'Vacaciones', color: 'red' },
-  ];
+  // 🔥 HISTORIAL  
+  const requestsHistory = solicitudes.map((sol, index) => ({
+    id: sol.id_solicitud || index + 1,
+    type: sol.proceso_solicitado || sol.tipo || 'Solicitud',
+    startDate: sol.fecha_inicio || sol.inicio || '2025-01-01',
+    endDate: sol.fecha_fin || sol.fin || '2025-01-01',
+    days: sol.dias_solicitados || sol.dias || 1,
+    status: sol.estado || 'pending',
+    attachments: sol.adjuntos || [],
+  }));
 
   const handleLogout = () => {
     logout();
@@ -140,7 +117,7 @@ const EmployeeDashboard = () => {
   };
 
   const handleDateClick = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split('T');
     if (selectedDates.includes(dateStr)) {
       setSelectedDates(selectedDates.filter(d => d !== dateStr));
     } else {
@@ -148,7 +125,8 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleSendMessage = () => {
+  // 🔥 ENVÍO  DE MENSAJES A N8N
+  const handleSendMessage = async () => {
     if (!messageInput.trim()) return;
 
     const newMessage = {
@@ -158,39 +136,43 @@ const EmployeeDashboard = () => {
       time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
     };
     setChatMessages([...chatMessages, newMessage]);
+    const currentInput = messageInput;
     setMessageInput('');
 
-    // Detectar si es licencia o incapacidad
-    const lowerText = messageInput.toLowerCase();
-    if (lowerText.includes('licencia') || lowerText.includes('incapacidad')) {
-      setPendingRequestType(lowerText.includes('licencia') ? 'licencia' : 'incapacidad');
-      setShowFileUpload(true);
+    try {
+      // Enviar mensaje  a N8N
+      const response = await sendMessage(currentInput, { user });
+      
+      const botResponse = {
+        id: chatMessages.length + 2,
+        text: response.text || 'Mensaje recibido',
+        sender: 'bot',
+        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      };
+      
+      setChatMessages(prev => [...prev, botResponse]);
 
-      // Respuesta del bot pidiendo adjuntar archivo
-      setTimeout(() => {
-        const botResponse = {
-          id: chatMessages.length + 2,
-          text: `📎 Para procesar tu solicitud de ${lowerText.includes('licencia') ? 'licencia' : 'incapacidad'}, necesito que adjuntes el documento correspondiente.\n\nPor favor, usa el botón de adjuntar archivo que apareció abajo. 👇`,
-          sender: 'bot',
-          time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        };
-        setChatMessages(prev => [...prev, botResponse]);
-      }, 500);
-    } else {
-      // Respuesta del bot para otros casos
-      setTimeout(() => {
-        const botResponse = {
-          id: chatMessages.length + 2,
-          text: '✅ He recibido tu mensaje. ¿Podrías darme más detalles sobre tu solicitud? Por ejemplo, las fechas que necesitas.',
-          sender: 'bot',
-          time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-        };
-        setChatMessages(prev => [...prev, botResponse]);
-      }, 500);
+      // Detectar si necesita adjuntar archivo
+      const lowerText = currentInput.toLowerCase();
+      if (lowerText.includes('licencia') || lowerText.includes('incapacidad')) {
+        setPendingRequestType(lowerText.includes('licencia') ? 'licencia' : 'incapacidad');
+        setShowFileUpload(true);
+      }
+
+    } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      const errorResponse = {
+        id: chatMessages.length + 2,
+        text: 'Lo siento, hubo un error procesando tu mensaje. Intenta nuevamente.',
+        sender: 'bot',
+        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setChatMessages(prev => [...prev, errorResponse]);
     }
   };
 
-  const handleQuickQuestion = (question) => {
+  // 🔥 RESPUESTAS DINÁMICAS BASADAS EN DATOS ES
+  const handleQuickQuestion = async (question) => {
     const newMessage = {
       id: chatMessages.length + 1,
       text: question.text,
@@ -199,25 +181,30 @@ const EmployeeDashboard = () => {
     };
     setChatMessages([...chatMessages, newMessage]);
 
-    // Respuestas automáticas basadas en la pregunta
-    setTimeout(() => {
+    setTimeout(async () => {
       let botText = '';
       switch (question.id) {
         case 1:
-          botText = '📝 Para solicitar vacaciones es muy fácil:\n\n1. Escríbeme las fechas que necesitas\n2. Yo verificaré tu saldo y disponibilidad del equipo\n3. Te daré una respuesta inmediata\n\nPor ejemplo: "Quiero vacaciones del 15 al 20 de diciembre"';
+          botText = '📝 Para solicitar vacaciones es muy fácil:\\n\\n1. Escríbeme las fechas que necesitas\\n2. Yo verificaré tu saldo y disponibilidad del equipo\\n3. Te daré una respuesta inmediata\\n\\nPor ejemplo: "Quiero vacaciones del 15 al 20 de diciembre"';
           break;
         case 2:
-          botText = `📊 Tu balance actual:\n\n✅ Total: ${userData.balance.totalDays} días\n📅 Usados: ${userData.balance.usedDays} días\n💚 Disponibles: ${userData.balance.remainingDays} días\n\n¡Tienes suficientes días para tomar unas merecidas vacaciones!`;
+          if (saldo) {
+            botText = `📊 Tu balance actual:\\n\\n✅ Total: ${saldo.total} días\\n📅 Usados: ${saldo.usado} días\\n💚 Disponibles: ${saldo.saldo} días\\n⏳ Pendientes: ${saldo.pendientes} solicitudes\\n\\n${saldo.saldo > 0 ? '¡Tienes días disponibles para tomar unas merecidas vacaciones!' : 'No tienes días disponibles en este momento.'}`;
+          } else {
+            botText = '⏳ Consultando tu saldo actual...';
+            // Refrescar saldo en background
+            loadInitialData();
+          }
           break;
         case 3:
           setPendingRequestType('licencia');
           setShowFileUpload(true);
-          botText = '📄 Entendido, necesitas solicitar una licencia.\n\nPor favor:\n1. Indícame el tipo de licencia (maternidad, paternidad, matrimonio, etc.)\n2. Las fechas que necesitas\n3. Adjunta el documento soporte usando el botón 📎 que apareció abajo';
+          botText = '📄 Entendido, necesitas solicitar una licencia.\\n\\nPor favor:\\n1. Indícame el tipo de licencia (maternidad, paternidad, matrimonio, etc.)\\n2. Las fechas que necesitas\\n3. Adjunta el documento soporte usando el botón 📎 que apareció abajo';
           break;
         case 4:
           setPendingRequestType('incapacidad');
           setShowFileUpload(true);
-          botText = '🏥 Lamento que no te sientas bien.\n\nPara procesar tu incapacidad médica necesito:\n1. Las fechas de la incapacidad\n2. El certificado médico (adjúntalo con el botón 📎 de abajo)\n\nTu solicitud será enviada a RRHH para aprobación.';
+          botText = '🏥 Lamento que no te sientas bien.\\n\\nPara procesar tu incapacidad médica necesito:\\n1. Las fechas de la incapacidad\\n2. El certificado médico (adjúntalo con el botón 📎 de abajo)\\n\\nTu solicitud será enviada a RRHH para aprobación.';
           break;
         case 5:
           setActiveTab('disponibilidad');
@@ -237,8 +224,9 @@ const EmployeeDashboard = () => {
     }, 800);
   };
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
+  // 🔥 ENVÍO  DE SOLICITUDES A N8N
+  const handleFileSelect = async (event) => {
+    const file = event.target.files;
     if (file) {
       // Validar tipo de archivo
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
@@ -256,18 +244,40 @@ const EmployeeDashboard = () => {
       setAttachedFile(file);
       toast.success(`Archivo "${file.name}" adjuntado correctamente`);
 
-      // Respuesta del bot
-      setTimeout(() => {
+      // 🔥 CREAR SOLICITUD  EN N8N
+      try {
+        const solicitudData = {
+          proceso_solicitado: pendingRequestType,
+          fecha_inicio: new Date().toISOString().split('T'),
+          fecha_fin: new Date().toISOString().split('T'),
+          mensaje: `Solicitud de ${pendingRequestType} con archivo adjunto: ${file.name}`
+        };
+
+        const result = await submitRequest(solicitudData, user);
+        
         const botResponse = {
           id: chatMessages.length + 1,
-          text: `✅ Perfecto! He recibido el archivo "${file.name}".\n\nTu solicitud de ${pendingRequestType} ha sido enviada a RRHH para su revisión y aprobación.\n\n📧 Recibirás una notificación cuando sea procesada.`,
+          text: result.success 
+            ? `✅ Perfecto! He recibido el archivo "${file.name}".\\n\\nTu solicitud de ${pendingRequestType} ha sido enviada correctamente al sistema.\\n\\n📧 Recibirás una notificación cuando sea procesada.`
+            : `❌ Error procesando la solicitud: ${result.message}`,
           sender: 'bot',
           time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
         };
+        
         setChatMessages(prev => [...prev, botResponse]);
-        setShowFileUpload(false);
-        setPendingRequestType(null);
-      }, 500);
+        
+        if (result.success) {
+          // Refrescar solicitudes
+          loadInitialData();
+        }
+
+      } catch (error) {
+        console.error('Error enviando solicitud:', error);
+        toast.error('Error procesando la solicitud');
+      }
+
+      setShowFileUpload(false);
+      setPendingRequestType(null);
     }
   };
 
@@ -281,9 +291,89 @@ const EmployeeDashboard = () => {
       approved: { icon: '✅', label: 'Aprobada', bg: '#dcfce7', color: '#166534', border: '#86efac' },
       pending: { icon: '⏳', label: 'Pendiente', bg: '#fef9c3', color: '#854d0e', border: '#fde047' },
       rejected: { icon: '❌', label: 'Rechazada', bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+      'en_proceso': { icon: '🔄', label: 'En Proceso', bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
     };
     return badges[status] || badges.pending;
   };
+
+  // 🚨 VALIDACIÓN: Usuario sin documento
+  if (!user?.documento) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        backgroundColor: '#F9F9FC',
+        padding: '24px' 
+      }}>
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fca5a5',
+          borderRadius: '12px',
+          padding: '24px',
+          maxWidth: '400px',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            color: '#991b1b',
+            fontFamily: 'Raleway, sans-serif',
+            fontWeight: 'bold',
+            marginBottom: '16px'
+          }}>
+            ⚠️ Perfil Incompleto
+          </h2>
+          <p style={{
+            color: '#7f1d1d',
+            fontFamily: 'Roboto, sans-serif',
+            marginBottom: '16px'
+          }}>
+            Tu perfil no tiene número de documento configurado. Esto es necesario para conectar con el sistema N8N.
+          </p>
+          <p style={{
+            color: '#7f1d1d',
+            fontFamily: 'Roboto, sans-serif',
+            fontSize: '0.875rem'
+          }}>
+            Usuario actual: {user?.name || 'Sin nombre'}<br/>
+            Email: {user?.email || 'Sin email'}<br/>
+            Documento: {user?.documento || '❌ NO CONFIGURADO'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔄 LOADING STATE
+  if (loading && !saldo) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        backgroundColor: '#F9F9FC' 
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #e5e7eb',
+            borderTop: '4px solid #04B45F',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p style={{
+            fontFamily: 'Roboto, sans-serif',
+            color: '#8A8A8A'
+          }}>
+            Cargando datos del empleado...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#F9F9FC', overflow: 'hidden' }}>
@@ -721,61 +811,6 @@ const EmployeeDashboard = () => {
                           </div>
                         </div>
                       ))}
-
-                      {/* Botones de preguntas rápidas (solo se muestran al inicio) */}
-                      {chatMessages.length <= 3 && (
-                        <div style={{ marginTop: '16px' }}>
-                          <p style={{
-                            fontFamily: 'Raleway, sans-serif',
-                            fontWeight: 600,
-                            fontSize: '0.875rem',
-                            color: '#303030',
-                            marginBottom: '12px',
-                          }}>
-                            💬 Preguntas frecuentes:
-                          </p>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr',
-                            gap: '8px',
-                          }}
-                          className="sm:grid-cols-2"
-                          >
-                            {quickQuestions.map((question) => (
-                              <button
-                                key={question.id}
-                                onClick={() => handleQuickQuestion(question)}
-                                style={{
-                                  backgroundColor: '#FFFFFF',
-                                  border: '2px solid #e5e7eb',
-                                  borderRadius: '12px',
-                                  padding: '12px',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s',
-                                  fontFamily: 'Roboto, sans-serif',
-                                  fontSize: '0.875rem',
-                                  color: '#303030',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = '#04B45F';
-                                  e.currentTarget.style.backgroundColor = '#f0fdf4';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = '#e5e7eb';
-                                  e.currentTarget.style.backgroundColor = '#FFFFFF';
-                                }}
-                              >
-                                <span style={{ fontSize: '1.25rem' }}>{question.icon}</span>
-                                <span>{question.text}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Input */}
@@ -784,76 +819,6 @@ const EmployeeDashboard = () => {
                       backgroundColor: '#FFFFFF',
                       borderTop: '1px solid #e5e7eb',
                     }}>
-                      {/* Botón de adjuntar archivo (solo visible cuando se solicita licencia/incapacidad) */}
-                      {showFileUpload && (
-                        <div style={{
-                          marginBottom: '12px',
-                          padding: '12px',
-                          backgroundColor: '#fef3c7',
-                          borderRadius: '8px',
-                          border: '1px solid #fde047',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <Paperclip size={20} style={{ color: '#ca8a04' }} />
-                              <span style={{
-                                fontFamily: 'Roboto, sans-serif',
-                                fontSize: '0.875rem',
-                                color: '#854d0e',
-                              }}>
-                                {attachedFile ? `Archivo: ${attachedFile.name}` : 'Adjunta tu documento'}
-                              </span>
-                            </div>
-                            {!attachedFile ? (
-                              <button
-                                onClick={() => fileInputRef.current?.click()}
-                                style={{
-                                  backgroundColor: '#04B45F',
-                                  color: '#FFFFFF',
-                                  padding: '8px 16px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontFamily: 'Raleway, sans-serif',
-                                  fontWeight: 600,
-                                  fontSize: '0.75rem',
-                                  transition: 'background-color 0.2s',
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#026636'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#04B45F'}
-                              >
-                                Seleccionar archivo
-                              </button>
-                            ) : (
-                              <button
-                                onClick={handleRemoveFile}
-                                style={{
-                                  backgroundColor: '#ef4444',
-                                  color: '#FFFFFF',
-                                  padding: '6px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.2s',
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
-                              >
-                                <CloseIcon size={16} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileSelect}
-                        style={{ display: 'none' }}
-                      />
-
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                           type="text"

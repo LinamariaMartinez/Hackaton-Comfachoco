@@ -14,35 +14,46 @@ const Login = () => {
   const { setUser } = useUserStore();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
+    e.preventDefault()
+    setLoading(true)
+  
     try {
-      const data = await login(email, password);
-      setUser(data.user);
-      toast.success('¡Bienvenido a Comfachocó Gestión!');
-
-      // Rutas corregidas según App.jsx
-      switch (data.user.role) {
-        case 'employee':
-          navigate('/empleado');
-          break;
-        case 'supervisor':
-          navigate('/supervisor');
-          break;
-        case 'hr':
-          navigate('/rrhh');
-          break;
-        default:
-          navigate('/empleado');
-      }
+      console.log('📤 Intentando login con:', email)
+      const data = await login(email, password)
+      console.log('✅ Login exitoso:', data)
+      
+      // 🔥 IMPORTANTE: Actualizar el store
+      setUser(data.user)
+      console.log('📝 Usuario guardado en store')
+      
+      toast.success('¡Bienvenido a Comfachocó Gestión!')
+  
+      // Esperar un poco antes de navegar
+      setTimeout(() => {
+        console.log('🚀 Navegando al dashboard...')
+        switch (data.user.role) {
+          case 'employee':
+            navigate('/empleado')
+            break
+          case 'supervisor':
+            navigate('/supervisor')
+            break
+          case 'hr':
+            navigate('/rrhh')
+            break
+          default:
+            navigate('/empleado')
+        }
+      }, 100)
+      
     } catch (error) {
-      toast.error('Credenciales incorrectas');
-      console.error(error);
+      console.error('❌ Error en login:', error)
+      toast.error('Credenciales incorrectas')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #04B45F 0%, #026636 100%)' }}>
