@@ -157,8 +157,7 @@ export const sendMessage = async (message, context = {}) => {
       proceso_solicitado: "consulta_chatbot"
     }
 
-    console.log('📤 Enviando payload a N8N:', payload)
-    console.log('🔗 URL completa:', `${API_BASE_URL}${CHATBOT_ENDPOINT}`)
+    console.log('📤 Enviando a N8N:', payload)
 
     const response = await fetch(`${API_BASE_URL}${CHATBOT_ENDPOINT}`, {
       method: 'POST',
@@ -166,89 +165,48 @@ export const sendMessage = async (message, context = {}) => {
       body: JSON.stringify(payload)
     })
 
-    console.log('📡 Respuesta HTTP:', response.status, response.statusText)
-    
-    // 🔥 VERIFICAR SI LA RESPUESTA ES EXITOSA
+    const responseText = await response.text()
+    console.log('📄 Respuesta de N8N:', responseText || '(vacía)')
+
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Error HTTP completo:', errorText)
-      throw new Error(`Error HTTP ${response.status}: ${response.statusText}`)
+      throw new Error(`Error HTTP ${response.status}: ${responseText}`)
     }
 
-    // 🔥 VERIFICAR EL CONTENT-TYPE
-    const contentType = response.headers.get('content-type')
-    console.log('📋 Content-Type recibido:', contentType)
-
-    if (!contentType || !contentType.includes('application/json')) {
-      const textResponse = await response.text()
-      console.warn('⚠️ Respuesta no es JSON:', textResponse)
-      
-      // Si N8N devuelve texto plano, usarlo directamente
+    // 🔥 MANEJAR RESPUESTA VACÍA DE N8N
+    if (!responseText.trim()) {
       return {
-        text: textResponse || 'Respuesta recibida del sistema',
+        text: `✅ Tu consulta "${message}" ha sido procesada correctamente por el sistema.\n\n` +
+              `📊 Detalles:\n` +
+              `• Usuario: ${user.name}\n` +
+              `• Documento: ${user.documento}\n` +
+              `• Área: ${user.department}\n\n` +
+              `El sistema está funcionando. N8N recibió tu solicitud exitosamente.`,
         action: 'backend_response',
-        data: { raw_response: textResponse }
+        data: { status: 'processed', empty_response: true }
       }
     }
 
-    // 🔥 INTENTAR PARSEAR JSON CON MANEJO DE ERRORES
-    let result
+    // Parsear JSON si hay contenido
     try {
-      const responseText = await response.text()
-      console.log('📄 Respuesta cruda:', responseText)
-      
-      if (!responseText.trim()) {
-        console.warn('⚠️ Respuesta vacía del servidor')
-        return {
-          text: 'Consulta procesada correctamente',
-          action: 'backend_response',
-          data: {}
-        }
-      }
-
-      result = JSON.parse(responseText)
-      console.log('✅ JSON parseado correctamente:', result)
-      
-    } catch (parseError) {
-      console.error('❌ Error parseando JSON:', parseError)
-      const responseText = await response.text()
-      console.log('📄 Texto que causó error:', responseText)
-      
-      // Usar el texto tal como viene si no es JSON
+      const result = JSON.parse(responseText)
       return {
-        text: responseText || 'Respuesta procesada',
+        text: result.respuesta || result.message || responseText,
         action: 'backend_response',
-        data: { error: 'response_not_json', raw: responseText }
+        data: result
       }
-    }
-    
-    // 🔥 EXTRAER RESPUESTA SEGÚN ESTRUCTURA DE N8N
-    const responseText = 
-      result.respuesta ||     // Si N8N devuelve 'respuesta'
-      result.message ||       // Si N8N devuelve 'message'  
-      result.texto ||         // Si N8N devuelve 'texto'
-      result.output ||        // Si N8N devuelve 'output'
-      JSON.stringify(result)  // Último recurso: mostrar todo
-
-    return {
-      text: responseText,
-      action: 'backend_response',
-      data: result
+    } catch (jsonError) {
+      return {
+        text: responseText,
+        action: 'backend_response',
+        data: { raw: responseText }
+      }
     }
 
   } catch (error) {
-    console.error('❌ Error completo en sendMessage:', error)
+    console.error('❌ Error:', error)
     
-    // 🔥 RESPUESTA DE DEBUGGING PARA DESARROLLO
     return {
-      text: `🔧 Error de conexión (Debug): ${error.message}\\n\\n` +
-            `URL: ${API_BASE_URL}${CHATBOT_ENDPOINT}\\n` +
-            `Usuario: ${user.documento}\\n` +
-            `Mensaje: ${message}\\n\\n` +
-            'Verifica:\\n' +
-            '1. Variables de entorno\\n' +
-            '2. Endpoint de N8N funcionando\\n' +
-            '3. Formato de respuesta de N8N',
+      text: `❌ Error de conexión: ${error.message}`,
       action: 'error',
       error: error.message
     }
