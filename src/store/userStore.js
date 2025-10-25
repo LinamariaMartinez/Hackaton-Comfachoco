@@ -30,9 +30,19 @@ const useUserStore = create(
         console.log('🧹 clearUser llamado')
         localStorage.removeItem('user')
         localStorage.removeItem('token')
-        set({ 
-          user: null, 
-          isAuthenticated: false 
+        set({
+          user: null,
+          isAuthenticated: false
+        })
+      },
+
+      logout: () => {
+        console.log('👋 Logout llamado')
+        localStorage.removeItem('user')
+        localStorage.removeItem('token')
+        set({
+          user: null,
+          isAuthenticated: false
         })
       },
 

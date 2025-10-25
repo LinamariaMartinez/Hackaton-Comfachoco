@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { login } from '../services/auth';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
+import logo from '/logo-comfachoco-no-lema.svg';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -67,16 +68,13 @@ const Login = () => {
         <div className="bg-white rounded-2xl shadow-2xl" style={{ padding: '2.5rem' }}>
 
           {/* Logo y Marca */}
-          <div className="text-center" style={{ marginBottom: '2rem' }}>
-            <div className="inline-flex items-center justify-center rounded-xl shadow-lg" style={{ width: '80px', height: '80px', backgroundColor: '#04B45F', marginBottom: '1rem' }}>
-              <span className="text-white font-bold" style={{ fontFamily: 'Raleway, sans-serif', fontSize: '2rem' }}>C</span>
+            <div className="text-center" style={{ marginBottom: '2rem' }}>
+              <div className="text-center" style={{ marginBottom: '1rem' }}>
+              <img src={logo} alt="Logo de Comfachocó" style={{ maxWidth: '200px', height: 'auto', margin: '0 auto' }} />
             </div>
             <h1 className="font-bold" style={{ fontFamily: 'Raleway, sans-serif', fontSize: '1.875rem', color: '#303030', marginBottom: '0.5rem' }}>
               Comfachocó
             </h1>
-            <p className="font-semibold" style={{ fontFamily: 'Raleway, sans-serif', fontSize: '0.875rem', color: '#04B45F' }}>
-              Gestión
-            </p>
             <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '0.875rem', color: '#8A8A8A', marginTop: '0.5rem' }}>
               Sistema de Gestión de Talento Humano
             </p>

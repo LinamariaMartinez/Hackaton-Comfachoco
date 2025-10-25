@@ -17,6 +17,7 @@ import {
   Building2
 } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
+import logo from '/logo-comfachoco-no-lema.svg';
 
 /**
  * StatsCard - Tarjeta de estadísticas corporativas
@@ -246,13 +247,9 @@ const HRDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '6px',
               }}>
-                <span style={{
-                  color: '#04B45F',
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 'bold',
-                  fontSize: '1.5rem',
-                }}>C</span>
+                <img src={logo} alt="Comfachocó" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div>
                 <span style={{
@@ -556,7 +553,7 @@ const HRDashboard = () => {
               </div>
             </div>
             <div style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'rgba(98, 191, 230, 0.95)',
               backdropFilter: 'blur(10px)',
               borderRadius: '16px',
               padding: '8px 16px',

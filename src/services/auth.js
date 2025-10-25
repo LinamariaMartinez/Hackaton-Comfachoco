@@ -1,107 +1,55 @@
-import { supabase } from '../lib/supabaseClient'
-
-// 🚧 MODO DEVELOPMENT: Usuario temporal para testing
-const TEMP_USER = {
-  id: 'temp-user-123',
-  email: 'empleado@comfachoco.com',
-  name: 'Usuario Temporal',
-  role: 'employee',
-  department: 'Desarrollo',
-  documento: '1234567890'  // 🔥 Importante para N8N
-}
-
-// Variable para activar/desactivar modo temporal
-const USE_TEMP_LOGIN = true // ⚠️ Cambiar a false cuando Supabase esté listo
+// Endpoint de N8N para autenticación
+const N8N_AUTH_ENDPOINT = 'https://comfachoco.app.n8n.cloud/webhook/auth-login'
 
 export const login = async (email, password) => {
   try {
-    // 🚧 MODO TEMPORAL: Bypass de Supabase
-    if (USE_TEMP_LOGIN) {
-      console.log('🚧 MODO DEVELOPMENT: Usando login temporal')
-      
-      // Simular delay para que se vea real
-      await new Promise(resolve => setTimeout(resolve, 800))
-      
-      // Validar credenciales básicas (opcional)
-      if (email === 'empleado@comfachoco.com' && password === '123456') {
-        
-        // 🔥 IMPORTANTE: Guardar en localStorage INMEDIATAMENTE
-        localStorage.setItem('user', JSON.stringify(TEMP_USER))
-        localStorage.setItem('token', 'temp-token-123')
-        
-        return {
-          user: TEMP_USER,
-          token: 'temp-token-123'
-        }
-      } else {
-        throw new Error('Credenciales incorrectas')
-      }
-    }
+    console.log('🔐 Intentando login con N8N...')
 
-    // 🔐 MODO PRODUCCIÓN: Supabase real (comentado temporalmente)
-    /*
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
+    const response = await fetch(N8N_AUTH_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
     })
 
-    if (error) {
-      throw new Error(error.message)
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Credenciales incorrectas')
     }
 
-    // Obtener perfil del usuario desde Supabase
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single()
+    const data = await response.json()
 
-    if (profileError) {
-      throw new Error('Error al obtener el perfil del usuario')
+    // Validar que viene la información del usuario
+    if (!data.user || !data.user.documento) {
+      throw new Error('Respuesta de autenticación inválida')
     }
 
-    // Validar que tiene documento para N8N
-    if (!profile.document_number) {
-      throw new Error('Usuario sin número de documento configurado')
-    }
+    // Guardar token y usuario en localStorage
+    localStorage.setItem('user', JSON.stringify(data.user))
+    localStorage.setItem('token', data.token || `token-${data.user.id}`)
+
+    console.log('✅ Login exitoso:', data.user)
 
     return {
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        name: profile.name,
-        role: profile.role,
-        department: profile.department,
-        documento: profile.document_number,
-      },
-      token: data.session.access_token
+      user: data.user,
+      token: data.token || `token-${data.user.id}`
     }
-    */
 
   } catch (error) {
-    console.error('Error en login:', error)
+    console.error('❌ Error en login:', error)
     throw error
   }
 }
 
 export const logout = async () => {
   try {
-    if (USE_TEMP_LOGIN) {
-      console.log('🚧 MODO DEVELOPMENT: Logout temporal')
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      return
-    }
-
-    // Código real de Supabase (comentado)
-    /*
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
-    
+    console.log('👋 Cerrando sesión...')
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    */
-    
   } catch (error) {
     console.error('Error en logout:', error)
     throw error
@@ -110,44 +58,15 @@ export const logout = async () => {
 
 export const getCurrentUser = async () => {
   try {
-    if (USE_TEMP_LOGIN) {
-      // Verificar si hay usuario temporal guardado
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        console.log('🔍 Usuario encontrado en localStorage:', JSON.parse(userStr))
-        return JSON.parse(userStr)
-      }
-      console.log('❌ No hay usuario en localStorage')
-      return null
+    // Verificar si hay usuario guardado en localStorage
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      console.log('🔍 Usuario encontrado en localStorage:', user)
+      return user
     }
-
-    // Código real de Supabase (comentado)
-    /*
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) return null
-
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-
-    if (error) {
-      console.error('Error al obtener perfil:', error)
-      return null
-    }
-
-    return {
-      id: session.user.id,
-      email: session.user.email,
-      name: profile.name,
-      role: profile.role,
-      department: profile.department,
-      documento: profile.document_number
-    }
-    */
-
+    console.log('❌ No hay usuario en localStorage')
+    return null
   } catch (error) {
     console.error('Error al obtener usuario actual:', error)
     return null
@@ -155,29 +74,13 @@ export const getCurrentUser = async () => {
 }
 
 export const onAuthStateChange = (callback) => {
-  if (USE_TEMP_LOGIN) {
-    // En modo temporal, ejecutar callback inmediatamente si hay usuario
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      callback(JSON.parse(userStr))
-    }
-    
-    // Retornar función de cleanup vacía
-    return () => {}
+  // En modo actual, ejecutar callback inmediatamente si hay usuario
+  const userStr = localStorage.getItem('user')
+  if (userStr) {
+    callback(JSON.parse(userStr))
   }
 
-  // Código real de Supabase (comentado)
-  /*
-  return supabase.auth.onAuthStateChange(async (event, session) => {
-    if (session) {
-      const user = await getCurrentUser()
-      callback(user)
-    } else {
-      callback(null)
-    }
-  })
-  */
-
+  // Retornar función de cleanup vacía
   return () => {}
 }
 

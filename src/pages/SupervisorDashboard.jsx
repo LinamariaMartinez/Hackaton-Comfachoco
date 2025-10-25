@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle, Calendar, BarChart3, LogOut, Check, X, Menu
 import { useUserStore } from '../store/userStore';
 import CalendarFull from '../components/Common/CalendarFull';
 import toast from 'react-hot-toast';
+import logo from '/logo-comfachoco-no-lema.svg';
 
 /**
  * ConflictCard - Componente reutilizable para conflictos
@@ -303,13 +304,9 @@ const SupervisorDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: '6px',
               }}>
-                <span style={{
-                  color: '#04B45F',
-                  fontFamily: 'Raleway, sans-serif',
-                  fontWeight: 'bold',
-                  fontSize: '1.5rem',
-                }}>C</span>
+                <img src={logo} alt="Comfachocó" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div>
                 <span style={{
@@ -655,7 +652,7 @@ const SupervisorDashboard = () => {
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
               <div style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                backgroundColor: 'rgba(98, 191, 230, 0.95)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '16px',
                 padding: '12px 16px',
