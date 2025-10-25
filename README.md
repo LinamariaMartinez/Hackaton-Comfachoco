@@ -84,7 +84,7 @@ Password: 123456
 
 1. **Clonar el repositorio**
 ```bash
-git clone https://github.com/tuusuario/comfachoco-hackaton.git
+git clone https://github.com/LinamariaMartinez/Hackaton-Comfachoco.git
 cd comfachoco-hackaton
 ```
 
