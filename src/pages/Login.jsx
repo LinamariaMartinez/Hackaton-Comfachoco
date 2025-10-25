@@ -25,7 +25,7 @@ const Login = () => {
       const response = await loginUser(email, password);
 
       if (!response.success) {
-        throw new Error("Error de autenticación");
+        throw new Error(response.message || "Error de autenticación");
       }
 
       console.log("✅ Login exitoso:", response.user);

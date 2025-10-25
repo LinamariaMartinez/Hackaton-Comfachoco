@@ -5,10 +5,76 @@ const ENDPOINTS = {
   GET_REQUESTS: "/webhook/chatbot-agenda",
   APPROVE_REQUEST: "/webhook/chatbot-agenda",
   REJECT_REQUEST: "/webhook/chatbot-agenda",
+  LOGIN_USER: "/webhook/login",
   /* // Próximos endpoints
-  LOGIN_USER: '/webhook/iniciar-sesion',
   REGISTER_USER: '/webhook/registrar-usuario',
   UPDATE_USER: '/webhook/modificar-usuario' */
+};
+/**
+ * Iniciar sesión de usuario
+ * @param {Object} credentials - { email, password }
+ * @returns {Promise<Object>} respuesta del backend
+ */
+export const loginUser = async (credentials) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}${ENDPOINTS.LOGIN_USER}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
+
+    const responseText = await response.text();
+    console.log("[loginUser] Respuesta cruda del backend:", responseText);
+
+    // Intentar parsear la respuesta sin importar el status HTTP
+    try {
+      const result = JSON.parse(responseText);
+      
+      // Si el backend indica match: false, es un error de credenciales
+      if (result.match === false) {
+        const errorMessage = result.message || "Credenciales incorrectas";
+        console.log("[loginUser] Error de autenticación:", errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          user_data: result.user_data || null,
+          error_type: "auth_failed"
+        };
+      }
+
+      // Validar que tengamos los datos necesarios
+      if (!result.user_data && !result.data?.user_data) {
+        console.log("[loginUser] Error: Respuesta sin datos de usuario");
+        return {
+          success: false,
+          message: "Error del servidor: Datos de usuario no disponibles",
+          error_type: "invalid_response"
+        };
+      }
+
+      // Si hay match o no viene match, asumimos éxito
+      return {
+        success: true,
+        data: result,
+      };
+
+    } catch (jsonError) {
+      // Error al parsear JSON
+      return {
+        success: false,
+        message: response.ok ? "Respuesta inválida del servidor" : `Error: ${response.status}`,
+        error: jsonError.message,
+        raw: responseText,
+      };
+    }
+  } catch (error) {
+    // Error de red u otro error
+    return {
+      success: false,
+      message: "Error al conectar con el servidor",
+      error: error.message,
+    };
+  }
 };
 
 /**
@@ -384,4 +450,5 @@ export default {
   rechazarSolicitud,
   consultarSaldo,
   consultarEstadoLicencias,
+  loginUser,
 };

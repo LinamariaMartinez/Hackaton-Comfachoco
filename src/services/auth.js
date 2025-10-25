@@ -1,9 +1,6 @@
+
 import toast from "react-hot-toast";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const ENDPOINTS = {
-  VITE_LOGIN_ENDPOINT: "/webhook/login",
-  VITE_CREATE_USER_ENDPOINT: "/webhook/create-user",
-};
+import { loginUser as loginUserChatbot } from "./chatbot";
 
 /**
  * Login de usuario
@@ -13,117 +10,64 @@ const ENDPOINTS = {
  */
 export const loginUser = async (email, password) => {
   try {
-    console.log("🔐 Intentando login con N8N...");
+    console.log("🔐 Intentando login con N8N (chatbot.js)...");
     console.log("Request payload:", {
       email_corp: email,
       contrasena: password,
     });
 
-    const response = await fetch(ENDPOINTS.VITE_LOGIN_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email_corp: email, // Renombrado a email_corp para N8N
-        contrasena: password, // Renombrado a contrasena para N8N (sin hashear - backend valida)
-      }),
-    });
-
-    console.log("Response status:", response.status);
-    console.log(
-      "Response headers:",
-      Object.fromEntries(response.headers.entries()),
-    );
-
-    // Validar status HTTP ANTES de parsear
-    if (!response.ok) {
-      console.error("Error HTTP:", response.status, response.statusText);
-
-      // Intentar obtener el mensaje de error del servidor
-      const text = await response.text();
-      console.error("Response error text:", text);
-
-      let errorMessage = "Credenciales incorrectas";
-
-      try {
-        const errorData = JSON.parse(text);
-        errorMessage = errorData.message || errorMessage;
-      } catch (e) {
-        console.error("No se pudo parsear respuesta de error como JSON");
+    const result = await loginUserChatbot({ email_corp: email, contrasena: password });
+    
+    if (!result.success) {
+      // Obtener mensaje de error apropiado basado en el tipo de error
+      let errorMessage = result.message;
+      
+      // Si hay datos del usuario, incluirlos en el error para debugging
+      if (result.user_data) {
+        console.log("📊 Datos del usuario encontrado:", result.user_data);
+        
+        // Personalizar mensaje si es error de contraseña
+        if (result.error_type === "auth_failed") {
+          errorMessage = "La contraseña ingresada no es correcta. Por favor, verifica e intenta nuevamente.";
+        }
       }
-
+      
+      // Mostrar mensaje de error al usuario
       toast.error(errorMessage);
-      throw new Error(`Login failed: ${response.status} - ${errorMessage}`);
+      
+      // Lanzar error con información adicional
+      const error = new Error(errorMessage);
+      error.type = result.error_type;
+      error.details = result;
+      throw error;
     }
 
-    // Validar que la respuesta no esté vacía
-    const text = await response.text();
-    console.log("Response text:", text);
-
-    // Workaround: Si devuelve 200 pero sin body, asume éxito
-    if (!text) {
-      console.warn("⚠️ Webhook devuelve 200 pero sin body. Usando fallback...");
-
-      const basicUser = {
-        email_corp: email,
-        rol: "rrhh",
-      };
-
-      localStorage.setItem("user", JSON.stringify(basicUser));
-      localStorage.setItem("token", "temp-token");
-      toast.success("Login exitoso");
-
-      return {
-        success: true,
-        role: "rrhh",
-        user: basicUser,
-        token: "temp-token",
-      };
-    }
-
-    // Intentar parsear JSON
-    let data;
-    try {
-      data = JSON.parse(text);
-      console.log("Parsed data:", data);
-    } catch (e) {
-      console.error("Server error: invalid JSON response", e);
-      console.error("Raw response:", text);
-      toast.error("Server error: invalid response format");
-      throw new Error("Server error: invalid JSON response");
-    }
-
-    // Validar respuesta del servidor: { success, user, token, role }
-    if (!data.success || !data.user || !data.token || !data.role) {
-      console.error("Invalid response structure:", data);
-      toast.error("Respuesta de autenticación inválida");
-      throw new Error("Respuesta de autenticación inválida");
-    }
+    // Si la autenticación fue exitosa
+    const userData = result.data?.user_data || result.data?.user || {};
+    const userRole = userData.rol?.toLowerCase() || "empleado";
+    const token = result.data?.token || "temp-token";
 
     // Guardar en localStorage
-    localStorage.setItem("user", JSON.stringify(data.user));
-    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", token);
 
-    console.log("✅ Login success:", data);
-    console.log("✅ User stored:", data.user);
-    console.log("✅ Token stored:", data.token);
+    toast.success("¡Bienvenido/a!");
 
     return {
       success: true,
-      role: data.role,
-      user: data.user,
-      token: data.token,
+      role: userRole,
+      user: userData,
+      token: token,
     };
+
   } catch (error) {
     console.error("❌ Error en login:", error);
-    console.error("Error stack:", error.stack);
-
-    // Solo mostrar toast si no se mostró antes
-    if (!error.message.includes("Login failed:")) {
-      toast.error(error.message || "Error al iniciar sesión");
+    
+    // Solo mostrar toast si no se ha mostrado ya un mensaje específico
+    if (!error.message.includes("Contraseña")) {
+      toast.error("Error al iniciar sesión");
     }
-
+    
     throw error;
   }
 };
