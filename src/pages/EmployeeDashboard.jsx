@@ -67,11 +67,11 @@ const EmployeeDashboard = () => {
 
       if (isDemoUser) {
         console.log("🎭 Modo Demo - Usando datos mock");
-        // Usar datos mock
+        // Usar datos mock con localStorage
         const saldoResult = mockConsultarSaldo(user);
         setSaldo(saldoResult);
 
-        const solicitudesResult = mockGetSolicitudes();
+        const solicitudesResult = mockGetSolicitudes(user);
         setSolicitudes(solicitudesResult.solicitudes || []);
       } else {
         // Usar backend real

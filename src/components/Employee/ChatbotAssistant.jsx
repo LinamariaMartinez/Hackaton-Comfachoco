@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Send, Paperclip, X } from "lucide-react";
 import toast from "react-hot-toast";
+import {
+  getChatHistoryFromStorage,
+  saveChatHistoryToStorage,
+} from "../../services/localStorage";
 
 const ChatbotAssistant = ({
   userData = {},
@@ -15,9 +19,19 @@ const ChatbotAssistant = ({
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Mensaje inicial
+  // Cargar historial de chat desde localStorage o crear mensaje inicial
   useEffect(() => {
-    if (chatMessages.length === 0) {
+    const userId = userData?.id;
+    if (!userId) return;
+
+    // Intentar cargar historial desde localStorage
+    const storedHistory = getChatHistoryFromStorage(userId);
+
+    if (storedHistory && storedHistory.length > 0) {
+      console.log('💾 Cargando historial de chat desde localStorage');
+      setChatMessages(storedHistory);
+    } else if (chatMessages.length === 0) {
+      // Si no hay historial, crear mensaje de bienvenida
       const welcomeMessage = {
         id: Date.now(),
         text: `¡Hola, ${userData.name || "Usuario"}! 👋\n\nSoy tu asistente de Comfachocó. ¿En qué puedo ayudarte hoy?`,
@@ -30,7 +44,7 @@ const ChatbotAssistant = ({
       setChatMessages([welcomeMessage]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.name]);
+  }, [userData?.id, userData?.name]);
 
   // Auto-scroll al final
   useEffect(() => {
@@ -41,6 +55,17 @@ const ChatbotAssistant = ({
       });
     }
   }, [chatMessages]);
+
+  // Guardar historial de chat en localStorage cada vez que cambie
+  useEffect(() => {
+    const userId = userData?.id;
+    if (!userId || chatMessages.length === 0) return;
+
+    // Guardar solo si hay más de un mensaje (no solo el de bienvenida)
+    if (chatMessages.length > 1) {
+      saveChatHistoryToStorage(userId, chatMessages);
+    }
+  }, [chatMessages, userData?.id]);
 
   const quickQuestions = [
     { id: 1, text: "¿Cómo solicito vacaciones?", icon: "🏖️" },

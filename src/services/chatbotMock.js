@@ -1,7 +1,15 @@
 /**
  * Servicio Mock para el Chatbot
  * Proporciona respuestas predefinidas para demostración sin backend
+ * Usa localStorage para persistencia
  */
+
+import {
+  getSolicitudesFromStorage,
+  saveSolicitudToStorage,
+  saveBalanceCache,
+  getBalanceCache,
+} from './localStorage';
 
 // Datos mock de saldo de vacaciones
 const MOCK_BALANCE_DATA = {
@@ -10,22 +18,30 @@ const MOCK_BALANCE_DATA = {
   "456789123": { total: 25, usado: 10, saldo: 15 }, // rrhh@comfachoco.com
 };
 
-// Datos mock de solicitudes
-const MOCK_REQUESTS = [
+// Datos iniciales mock de solicitudes (solo si no hay en localStorage)
+const INITIAL_MOCK_REQUESTS = [
   {
-    id: 1,
     type: "Vacaciones",
+    proceso_solicitado: "Vacaciones",
+    fecha_inicio: "2025-02-10",
     startDate: "2025-02-10",
+    fecha_fin: "2025-02-14",
     endDate: "2025-02-14",
+    dias_solicitados: 5,
     days: 5,
+    estado: "approved",
     status: "approved",
   },
   {
-    id: 2,
     type: "Licencia médica",
+    proceso_solicitado: "Licencia médica",
+    fecha_inicio: "2025-01-15",
     startDate: "2025-01-15",
+    fecha_fin: "2025-01-16",
     endDate: "2025-01-16",
+    dias_solicitados: 2,
     days: 2,
+    estado: "pending",
     status: "pending",
   },
 ];
@@ -106,44 +122,104 @@ export const getMockChatbotResponse = (message, userData = {}) => {
 };
 
 /**
- * Simula el envío de una solicitud (mock)
+ * Simula el envío de una solicitud (mock) y la guarda en localStorage
  */
 export const mockSubmitRequest = async (payload) => {
   // Simular delay de red
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const userName = payload?.user?.name || "Usuario";
+  const userId = payload?.user?.id || "unknown";
   const requestType = payload?.type || "solicitud";
 
-  // Simular éxito
-  return {
-    success: true,
-    message: `✅ ¡Listo ${userName}!`,
-    text: `Tu ${requestType} ha sido registrada exitosamente.\n\n📋 **Detalles:**\n• Tipo: ${requestType}\n• Estado: En revisión\n• Fecha: ${new Date().toLocaleDateString("es-ES")}\n\n📬 Recibirás una notificación cuando sea procesada por tu supervisor.\n\n💚 ¡Gracias por usar el sistema de Comfachocó!`,
+  // Crear solicitud
+  const newRequest = {
+    type: requestType,
+    proceso_solicitado: requestType,
+    fecha_inicio: new Date().toISOString().split('T')[0],
+    startDate: new Date().toISOString().split('T')[0],
+    fecha_fin: new Date(Date.now() + 86400000).toISOString().split('T')[0], // +1 día
+    endDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    dias_solicitados: 1,
+    days: 1,
+    estado: "pending",
+    status: "pending",
+    mensaje: payload?.mensaje || `Solicitud de ${requestType}`,
   };
+
+  // Guardar en localStorage
+  try {
+    const savedRequest = saveSolicitudToStorage(userId, newRequest);
+    console.log('✅ Solicitud guardada en localStorage:', savedRequest);
+
+    return {
+      success: true,
+      message: `✅ ¡Listo ${userName}!`,
+      text: `Tu ${requestType} ha sido registrada exitosamente.\n\n📋 **Detalles:**\n• Tipo: ${requestType}\n• Estado: En revisión\n• Fecha: ${new Date().toLocaleDateString("es-ES")}\n• ID: ${savedRequest.id}\n\n📬 Recibirás una notificación cuando sea procesada por tu supervisor.\n\n💚 ¡Gracias por usar el sistema de Comfachocó!`,
+      request: savedRequest,
+    };
+  } catch (error) {
+    console.error('Error guardando solicitud:', error);
+    return {
+      success: false,
+      message: 'Error al guardar la solicitud',
+      text: 'Hubo un error al procesar tu solicitud. Por favor intenta nuevamente.',
+    };
+  }
 };
 
 /**
- * Consulta el saldo de días (mock)
+ * Consulta el saldo de días (mock) con cache
  */
 export const mockConsultarSaldo = (userData) => {
   const documento = userData?.numero_documento || userData?.documento;
+  const userId = userData?.id;
+
+  // Intentar obtener desde cache primero
+  const cached = getBalanceCache(userId);
+  if (cached) {
+    console.log('💾 Usando saldo desde cache');
+    return cached;
+  }
+
+  // Si no hay cache, obtener datos mock
   const balance = MOCK_BALANCE_DATA[documento] || { total: 15, usado: 0, saldo: 15 };
 
-  return {
+  const result = {
     success: true,
     total: balance.total,
     usado: balance.usado,
     saldo: balance.saldo,
   };
+
+  // Guardar en cache
+  saveBalanceCache(userId, result);
+
+  return result;
 };
 
 /**
- * Obtiene solicitudes del usuario (mock)
+ * Obtiene solicitudes del usuario (mock) desde localStorage
  */
-export const mockGetSolicitudes = () => {
+export const mockGetSolicitudes = (userData) => {
+  const userId = userData?.id || "unknown";
+
+  // Obtener solicitudes desde localStorage
+  let solicitudes = getSolicitudesFromStorage(userId);
+
+  // Si no hay solicitudes en localStorage, inicializar con datos mock
+  if (solicitudes.length === 0) {
+    console.log('📝 Inicializando solicitudes mock en localStorage');
+    INITIAL_MOCK_REQUESTS.forEach(req => {
+      saveSolicitudToStorage(userId, req);
+    });
+    solicitudes = getSolicitudesFromStorage(userId);
+  }
+
+  console.log(`📋 Solicitudes cargadas desde localStorage (${solicitudes.length}):`, solicitudes);
+
   return {
     success: true,
-    solicitudes: MOCK_REQUESTS,
+    solicitudes: solicitudes,
   };
 };
